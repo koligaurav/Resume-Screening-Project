@@ -139,6 +139,19 @@ st.markdown("""
 def load_models():
     """Load the trained models"""
     try:
+        # First, try to download models if they don't exist
+        if not all(os.path.exists(f) for f in ['tfidf.pkl', 'clf.pkl', 'encoder.pkl']):
+            st.info("📥 Downloading model files... This may take a few minutes.")
+            try:
+                from download_models_simple import download_models
+                if not download_models():
+                    st.error("❌ Failed to download model files. Please check your internet connection.")
+                    st.stop()
+            except ImportError:
+                st.error("❌ Model files not found and download script unavailable!")
+                st.stop()
+        
+        # Load the models
         with open('tfidf.pkl', 'rb') as f:
             tfidf = pickle.load(f)
         with open('clf.pkl', 'rb') as f:
@@ -146,8 +159,8 @@ def load_models():
         with open('encoder.pkl', 'rb') as f:
             le = pickle.load(f)
         return tfidf, clf, le
-    except FileNotFoundError:
-        st.error("❌ Model files not found! Please ensure tfidf.pkl, clf.pkl, and encoder.pkl are in the current directory.")
+    except Exception as e:
+        st.error(f"❌ Error loading models: {str(e)}")
         st.stop()
 
 def cleanResume(txt):
